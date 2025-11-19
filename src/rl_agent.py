@@ -74,7 +74,10 @@ class RLAgent:
             returns.insert(0, R)
             
         returns = torch.tensor(returns)
-        returns = (returns - returns.mean()) / (returns.std() + 1e-9) # Normalize
+        if len(returns) > 1:
+            returns = (returns - returns.mean()) / (returns.std() + 1e-9) # Normalize
+        else:
+            returns = returns - returns.mean() # Center only
         
         policy_losses = []
         value_losses = []
@@ -86,7 +89,7 @@ class RLAgent:
             policy_losses.append(-log_prob * advantage)
             
             # Critic loss
-            value_losses.append(F.smooth_l1_loss(value, torch.tensor([R])))
+            value_losses.append(F.smooth_l1_loss(value, torch.tensor([[R]])))
             
         loss = torch.stack(policy_losses).sum() + torch.stack(value_losses).sum()
         

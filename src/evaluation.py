@@ -6,7 +6,7 @@ class Evaluator:
         pass
         
     def dcg_at_k(self, r, k):
-        r = np.asfarray(r)[:k]
+        r = np.asarray(r, dtype=float)[:k]
         if r.size:
             return np.sum(r / np.log2(np.arange(2, r.size + 2)))
         return 0.
@@ -18,7 +18,7 @@ class Evaluator:
         return self.dcg_at_k(r, k) / dcg_max
 
     def precision_at_k(self, r, k):
-        r = np.asfarray(r)[:k]
+        r = np.asarray(r, dtype=float)[:k]
         return np.mean(r)
 
     def calculate_ild(self, recommended_item_vectors):
@@ -42,7 +42,7 @@ class Evaluator:
         Calculates Homogeneity Score.
         Average similarity of recommendations to user history.
         """
-        if not recommended_item_vectors or user_history_vector is None:
+        if len(recommended_item_vectors) == 0 or user_history_vector is None:
             return 0.0
             
         # Reshape user vector if needed

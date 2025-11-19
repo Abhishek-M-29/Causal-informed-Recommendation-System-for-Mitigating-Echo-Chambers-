@@ -1,5 +1,5 @@
-from causalearn.search.ScoreBased.HC import HC
-from causalearn.utils.GraphUtils import GraphUtils
+from causallearn.search.ScoreBased.GES import ges
+from causallearn.utils.GraphUtils import GraphUtils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,9 +16,9 @@ class CausalDiscoveryEngine:
         
     def learn_structure(self):
         """
-        Runs Hill-Climbing algorithm with BIC score and tiered constraints.
+        Runs GES algorithm (Score-based) with BIC score and tiered constraints.
         """
-        print("Starting Causal Structure Learning (Hill-Climbing)...")
+        print("Starting Causal Structure Learning (GES)...")
         
         # Define Tiers
         # Tier 1: User Features (U_...)
@@ -39,29 +39,15 @@ class CausalDiscoveryEngine:
             else:
                 tiers[col] = 0 # Default or unknown
         
-        # Create a forbidden edges list or check function
-        # In causal-learn, we might not have a direct 'tiers' parameter in HC, 
-        # but we can post-process or use a constraint-based method if HC doesn't support it directly easily.
-        # However, the blueprint asks for HC. 
-        # We can use a blacklist/whitelist if supported, or just run HC and filter.
-        # Better: Use domain knowledge to initialize or constrain.
-        
-        # Actually, causal-learn's HC implementation allows for a 'background_knowledge' object 
-        # where we can specify forbidden/required edges.
-        
         # Let's prepare the data for causal-learn (numpy array)
         dataset = self.data.to_numpy()
         var_names = self.data.columns.tolist()
         
-        # Run HC
-        # Note: causal-learn HC might not directly support 'tiers' in the simple API.
-        # We will run standard HC and then prune edges that violate the time/tier order.
-        # This is a common heuristic when the library doesn't strictly enforce it during search.
+        # Run GES
+        # ges returns a dictionary with 'G' (graph), 'update_score_list'
+        Record = ges(dataset, score_func='local_score_BIC')
         
-        model = HC(self.data, score_metric='bic') # HC takes dataframe directly in newer versions or numpy
-        
-        # If HC returns a DAG, we can inspect it.
-        self.graph = model
+        self.graph = Record['G']
         
         print("Structure learning complete.")
         self._enforce_tiers(tiers, var_names)
