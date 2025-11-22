@@ -44,11 +44,40 @@ Run the full pipeline in the terminal:
 python main.py
 ```
 
-## Data
+## Project Workflow
 
-The project is configured to automatically generate **mock data** (`data/news.tsv`, `data/behaviors.tsv`) if the MIND dataset is not found. 
-- The mock data generator creates diverse user preferences and news categories to ensure statistical validity for Causal Discovery.
-- To use the real [MIND Dataset](https://msnews.github.io/), download and place `news.tsv` and `behaviors.tsv` in the `data/` folder.
+The system operates in four main phases:
+
+1.  **Data Loading & Processing**:
+    -   Ingests user behavior logs and news metadata.
+    -   Constructs feature tensors: User History ($U$), Item Features ($I$), Action/Rank ($A$), and Outcomes ($Y_{click}$, $Y_{diversity}$).
+
+2.  **Causal Discovery**:
+    -   Uses the **GES (Greedy Equivalence Search)** algorithm to learn the causal structure of the data.
+    -   Applies **Tiered Constraints** to ensure logical directionality (e.g., User Features cause Clicks, not vice versa).
+    -   *Goal*: Identify which features actually drive diversity and engagement.
+
+3.  **Counterfactual Reasoning**:
+    -   Trains a neural network to estimate the **Causal Effect** of recommending a specific item to a specific user.
+    -   Predicts the *potential* diversity score if an item *were* to be recommended (Counterfactual).
+
+4.  **Reinforcement Learning (RL)**:
+    -   Trains an **Actor-Critic** agent.
+    -   **Reward Function**: A weighted sum of Engagement (Click) and Diversity (Counterfactual Prediction).
+    -   *Goal*: Learn a policy that maximizes this composite reward, breaking the filter bubble.
+
+## Data & Mock Data Generation
+
+The project is configured to automatically generate **mock data** (`data/news.tsv`, `data/behaviors.tsv`) if the MIND dataset is not found.
+
+-   **Why Mock Data?** To allow the system to run immediately without downloading the large MIND dataset.
+-   **Diversity & Variance**: The mock data generator creates diverse user preferences and news categories. It specifically introduces variance in subcategories and user history to ensure the data is statistically valid for Causal Discovery (preventing "Singular Matrix" errors caused by perfect multicollinearity).
+-   **Real Data**: To use the real [MIND Dataset](https://msnews.github.io/), download and place `news.tsv` and `behaviors.tsv` in the `data/` folder.
+
+## Troubleshooting
+
+-   **Graphviz Error**: If you see a message about "Graphviz binary not found", it means the system cannot generate the high-quality causal graph image. The app will automatically fallback to a NetworkX visualization, which is fully functional but less pretty. To fix this, install Graphviz on your OS and add it to your PATH.
+-   **Singular Matrix Error**: This occurs if the dataset has columns with zero variance or perfect correlation. The current `mock_data.py` is tuned to prevent this. If you use your own data, ensure features are not perfectly collinear.
 
 ## Key Features
 - **Causal Discovery**: Uses the GES algorithm to discover causal relationships between User features, Item features, and Outcomes (Click, Diversity).
